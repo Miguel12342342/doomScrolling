@@ -1,111 +1,91 @@
-# Doomscrolling Blocker 📱🚫
+# Doomscrolling Blocker
 
-A Python program that uses your webcam to detect when you're looking down at your phone (aka doomscrolling) and roasts you to get back to work! Features an automatic rickroll video popup when caught!
+Programa em Python que usa a webcam para detectar quando você está olhando para o celular e te pune com um rickroll automático. Quando você levantar a cabeça, o vídeo fecha sozinho.
 
-## Features
+## Como funciona
 
-- **Real-time face and eye tracking** using OpenCV
-- **Doomscrolling detection** - detects when you tilt your head down
-- **Motivational roasting** - displays harsh but motivating messages when caught
-- **Rickroll punishment** - automatically plays `rickroll.mp4` when you're doomscrolling
-- **Auto-close video** - stops the video when you return to good posture
-- **Automatic fallback** - works with dlib or OpenCV Haar Cascades
+1. **Detecção de rosto** via MediaPipe (principal), dlib ou OpenCV Haar Cascades como fallback
+2. **Análise de olhar** rastreia a posição da íris dentro do olho em tempo real
+3. **Detecção de doomscrolling** dispara quando a íris está na parte inferior do olho (olhando para baixo)
+4. **Punição** abre o `rickroll.mp4` automaticamente e exibe frases motivacionais na tela
+5. **Auto-recuperação** fecha o vídeo assim que você volta a olhar para frente
 
-## Installation
-
-### Quick Install
+## Instalação
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Manual Install
-
-#### Basic (OpenCV only)
+Para melhor precisão, instale o MediaPipe:
 
 ```bash
-pip install opencv-python numpy
+pip install mediapipe
 ```
 
-#### Advanced (Better accuracy with dlib)
+O modelo de detecção facial é baixado automaticamente na primeira execução.
 
+### Fallbacks (sem MediaPipe)
+
+**dlib** (boa precisão):
 ```bash
-pip install opencv-python numpy dlib
-
-# Download the face landmarks model
-wget http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2
-bunzip2 shape_predictor_68_face_landmarks.dat.bz2
+pip install dlib
+# Baixe o modelo de landmarks:
+# http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2
 ```
 
-### Setup
+**OpenCV Haar Cascades** — funciona sem instalar nada além do `requirements.txt`.
 
-1. Place your `rickroll.mp4` file in the project directory
-2. Make sure QuickTime Player (macOS), VLC (Linux), or default video player (Windows) is installed
-
-## Usage
+## Uso
 
 ```bash
 python main.py
 ```
 
-- The program will open your webcam
-- Look at the screen normally = Green "Good posture!" message
-- Look down at your phone = Red warning with roasting messages + **RICKROLL VIDEO AUTOPLAY** 🎵
-- Return to good posture = Video automatically closes
-- Press **'q'** to quit
+| Estado | O que aparece na tela |
+|---|---|
+| Olhando para frente | "Good posture! Keep it up!" em verde |
+| Olhando para baixo | Frase de incentivo em vermelho + rickroll |
+| Transição | "Monitoring..." em amarelo |
 
-## How It Works
+Pressione `q` para sair.
 
-1. **Face Detection**: Detects your face using either dlib or OpenCV Haar Cascades
-2. **Posture Analysis**: Tracks head tilt and eye position
-3. **Doomscroll Detection**: Triggers when:
-   - Your head tilts down significantly
-   - Your face moves to the lower portion of the frame
-   - Your eyes are positioned low in your face region
-4. **Roasting**: Displays motivational (harsh) messages every 3 seconds when caught
-5. **Rickroll**: Automatically opens and plays `rickroll.mp4` when doomscrolling detected
-6. **Auto-stop**: Closes the video when you return to normal posture
+### Opções
 
-## Sample Roasts
+```bash
+python main.py --video outra_musica.mp4   # vídeo de punição customizado
+python main.py --sensitivity 0.45         # mais sensível (padrão: 0.55)
+python main.py --cooldown 5               # intervalo entre frases em segundos (padrão: 3)
+python main.py --threshold 3              # frames para confirmar detecção (padrão: 1)
+```
 
-- "You'll fail if you don't stop!"
-- "Your dreams called - they want your attention back!"
-- "Future you is watching. They're disappointed."
-- "The algorithm wins again. Pathetic."
-- "PUT. THE. PHONE. DOWN. NOW."
-
-## Requirements
+## Requisitos
 
 - Python 3.13+
 - Webcam
-- OpenCV (`opencv-python`)
-- NumPy
-- dlib (optional, for better accuracy)
-- QuickTime Player (macOS) or VLC (Linux) or Windows Media Player (Windows)
-- `rickroll.mp4` file in project directory
+- `opencv-python` e `numpy` (incluídos no `requirements.txt`)
+- `mediapipe` (opcional, recomendado)
+- `dlib` (opcional, fallback)
+- VLC, Windows Media Player ou player padrão do sistema para reproduzir o vídeo
 
-## Customization
+## Customização
 
-Edit `main.py` to customize:
-- **Roast messages**: Modify the `self.roasts` list (line 31-45)
-- **Detection sensitivity**: Adjust `face_position_ratio` thresholds (line 118, 124)
-- **Roast frequency**: Change `self.roast_cooldown` (line 50, default: 3 seconds)
-- **Video file**: Change `self.rickroll_path` (line 55) to use a different video
+Tudo configurável direto no `main.py`:
 
-## Troubleshooting
+- **Frases** — lista `self.roasts` no `__init__`
+- **Sensibilidade** — parâmetro `--sensitivity` ou `self.sensitivity`
+- **Intervalo entre frases** — parâmetro `--cooldown` ou `self.roast_cooldown`
+- **Vídeo de punição** — parâmetro `--video` ou `self.rickroll_path`
 
-**Video doesn't autoplay on macOS:**
-- Make sure QuickTime Player is installed
-- The script uses AppleScript to force autoplay
+## Solução de problemas
 
-**Video doesn't close automatically:**
-- The script sends a kill command to QuickTime Player
-- You may need to manually close it if the process detection fails
+**Detecção muito sensível ou insensível**
+Ajuste com `--sensitivity`. Valores menores = mais sensível. O valor padrão é `0.55`.
 
-**Detection is too sensitive/not sensitive enough:**
-- Adjust the thresholds in `detect_doomscroll_opencv()` or `detect_doomscroll_dlib()`
-- Change `face_position_ratio > 0.55` to a higher (less sensitive) or lower (more sensitive) value
+**Vídeo não abre**
+Certifique-se de que o arquivo de vídeo existe no diretório. No Windows, o programa tenta VLC, Windows Media Player e depois o player padrão do sistema.
 
-## License
+**Vídeo não fecha automaticamente**
+O programa envia um sinal de encerramento ao player. Se falhar, feche manualmente e considere instalar o VLC para melhor controle do processo.
 
-Free to use. Stay productive! 💪
+**Câmera não abre**
+Verifique se outra aplicação não está usando a webcam. No Windows, o programa usa `CAP_DSHOW` automaticamente.
